@@ -16,23 +16,21 @@ public class MyScrollView : MonoBehaviour
     float allowedMaxY;
     private void Start()
     {
-        //maxMove = clampHigh.anchoredPosition.y- clampLow.anchoredPosition.y;
-        //Debug.Log("Max allowed Y move:startY = transformToMove.anchoredPosition.y;
-
         startY = topAnchor.anchoredPosition.y;
         allowedMinY = startY;
         ManageScrollAndChildren();
-
     }
 
     private void ManageScrollAndChildren()
     {
         float visibleHeight = GetComponent<RectTransform>().rect.height;
-        Debug.Log("My height: " + visibleHeight);
         int i = 0;
         float actualHeight = 0;
         foreach (RectTransform child in transform)
         {
+            Quest questComp = child.GetComponent<Quest>();
+            if (questComp == null) continue;
+
             child.anchoredPosition = topAnchor.anchoredPosition - (Vector2.up * i * (childSize + spaceBetweenElements));
             actualHeight = child.anchoredPosition.y - childSize;
             i++;
@@ -58,6 +56,10 @@ public class MyScrollView : MonoBehaviour
     public void OnTransformChildrenChanged()
     {
         ManageScrollAndChildren();
+    }
+    public void OnEnable()
+    {
+        //ManageScrollAndChildren();
     }
     public void Move(float percentage)
     {

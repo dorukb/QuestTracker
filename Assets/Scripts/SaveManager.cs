@@ -22,7 +22,15 @@ public class SaveManager : MonoBehaviour
         if(!questData.Contains(newData))
             questData.Add(newData);
     }
-    public void RemoveSaveData(int id) 
+    public void UpdateSaveDataOf(string id, bool isCompleted)
+    {
+        var quest = questData.Find(q => q.id == id);
+        if (quest != null)
+        {
+            quest.isCompleted = isCompleted;
+        }
+    }
+    public void RemoveSaveData(string id) 
     {
         if (questData == null) return;
         questData.RemoveAll(q => q.id == id);
@@ -92,14 +100,16 @@ public class SaveData
 [System.Serializable]
 public class QuestData
 {
+    public bool isCompleted;
     public string title;
     public string desc;
-    public int id;
+    public string id;
     public long deadline;
     public QuestType type;
 
-    public QuestData(string title, string desc, DateTime deadline, QuestType type, int id)
+    public QuestData(string title, string desc, DateTime deadline, QuestType type, string id)
     {
+        this.isCompleted = false;
         this.title = title;
         this.desc = desc;
         this.id = id;

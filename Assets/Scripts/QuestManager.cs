@@ -7,33 +7,58 @@ public class QuestManager : MonoBehaviour
 {
     public GameObject questPrefab;
     public List<Quest> quests;
-    public QuestView questView;
 
+    public TabManager tabManager;
     private SaveManager saveManager;
     void Start()
     {
         saveManager = FindObjectOfType<SaveManager>();
+        tabManager = FindObjectOfType<TabManager>();
         // load all quests from disk if there are any.
         List<QuestData> savedQuests = saveManager.GetSavedQuests();
-        if(savedQuests != null)
+        QuestView activeView = tabManager.GetTabView(Tabs.Active);
+        QuestView completedView = tabManager.GetTabView(Tabs.Completed);
+
+        //Display quests.
+        if (savedQuests != null)
         {
             foreach (var questData in savedQuests)
             {
-                CreateQuest(questData);
+                if (questData.isCompleted)
+                {
+                    CreateQuest(questData, completedView);
+                }
+                else
+                {
+                    CreateQuest(questData, activeView);
+                }
             }
-            UpdateQuestView();
         }
-        //Display quests.
     }
 
-    public void DeleteQuest(int id)
+    public void CompleteQuest(string id)
+    {
+        //remove from active tab, add to completed tab. (with modified visual rep.??)
+        Quest quest = quests.Find(q => q.id == id);
+        if (quest != null)
+        {
+            //change its parent to completed tab view.
+            QuestView completedView = tabManager.GetTabView(Tabs.Completed);
+            quest.gameObject.transform.SetParent(completedView.transform);
+            saveManager.UpdateSaveDataOf(id, true);
+            saveManager.Save();
+
+            quest.ChangeParentView(completedView);
+        }
+    }
+    public void DeleteQuest(string id)
     {
         Quest quest = quests.Find(q => q.id == id);
         if (quest != null) 
         {
             quests.Remove(quest);
             Destroy(quest.gameObject);
-            UpdateQuestView();
+            //UpdateQuestView();
         }
         saveManager.RemoveSaveData(id);
         saveManager.Save();
@@ -44,25 +69,26 @@ public class QuestManager : MonoBehaviour
         DateTime deadline = DateTime.Today.AddDays(days);
 
         QuestData data = new QuestData(title, desc, deadline, QuestType.Main, GenerateNewID());
-        CreateQuest(data);
+
+        QuestView currentView= tabManager.GetTabView(Tabs.Active);
+        CreateQuest(data,currentView);
         saveManager.AddSaveData(data);
         saveManager.Save();
 
-        UpdateQuestView();
+        //UpdateQuestView();
     }
 
-    private void CreateQuest(QuestData questData)
+    private void CreateQuest(QuestData questData, QuestView parent)
     {
-        Quest quest = Instantiate(questPrefab, questView.transform).GetComponent<Quest>();
-        quest.Setup(questData);
+        Quest quest = Instantiate(questPrefab, parent.transform).GetComponent<Quest>();
+        quest.Setup(questData, parent);
         quests.Add(quest);
+        Debug.LogFormat("Added quest:{0} with state{1}", questData.id, questData.isCompleted);
     }
-    private void UpdateQuestView()
-    {
-    }
+  
 
-    private int GenerateNewID()
+    private string GenerateNewID()
     {
-        return UnityEngine.Random.Range(-10000, 10000);
+        return Guid.NewGuid().ToString();
     }
 }
